@@ -1,0 +1,7 @@
+registry.json
+.rename.lock
+__pycache__/
+*.pyc
+
+files/*
+!files/.gitkeep
