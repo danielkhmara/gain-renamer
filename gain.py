@@ -35,6 +35,7 @@ FILES_DIR = SCRIPT_DIR / "files"
 GAIN_RE = re.compile(r"^\d{4}-\d{4}-\d{4}-\d{4}\.[^.]+$", re.I)
 GAIN_WIDTH = 16
 GAIN_GROUP = 4
+NATURAL_RE = re.compile(r"(\d+)")
 
 PHOTO_EXT = {
     ".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif",
@@ -50,6 +51,15 @@ SKIP_NAMES = {"registry.json", "gain.py", ".ds_store", "thumbs.db", "desktop.ini
 def format_gain(n: int) -> str:
     core = f"{n:0{GAIN_WIDTH}d}"
     return "-".join(core[i : i + GAIN_GROUP] for i in range(0, GAIN_WIDTH, GAIN_GROUP))
+
+
+def natural_key(path: str) -> list[tuple[int, int | str]]:
+    """Sort paths so 1, 2, 10 come before 100 (not 1, 10, 100, 2)."""
+    return [
+        (0, int(part)) if part.isdigit() else (1, part.lower())
+        for part in NATURAL_RE.split(path)
+        if part
+    ]
 
 
 def file_kind(path: Path) -> str:
@@ -75,7 +85,7 @@ def collect_files(root: Path) -> list[Path]:
         for p in root.rglob("*")
         if p.is_file() and not should_skip(p) and not GAIN_RE.match(p.name)
     ]
-    files.sort(key=lambda p: p.relative_to(root).as_posix().lower())
+    files.sort(key=lambda p: natural_key(p.relative_to(root).as_posix()))
     return files
 
 
